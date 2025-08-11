@@ -8,8 +8,11 @@ class HelloController extends Controller
 {
     public function index(): Response
     {
-        return response(["message" => "hello"], 200)
-
+        $data = [
+            'message' => 'hello',
+        ];
+        return response($data, 200)
+        //return json
             ->header('Content-Type', 'text/plain; charset=UTF-8');
     }
 }

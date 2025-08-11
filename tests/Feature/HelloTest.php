@@ -19,6 +19,7 @@ class HelloTest extends TestCase
                     ->assertHeader('Content-Type', 'text/plain; charset=UTF-8')
                     ->assertJson([ 
                         'message' => 'hello'
-                    ]);
+                    ])
+                    ->assertStatus(200);
     }
 }
