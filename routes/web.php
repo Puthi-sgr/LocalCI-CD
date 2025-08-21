@@ -16,6 +16,16 @@ use App\Http\Controllers\VendorController;
 |
 */
 
+Route::resource('vendors', VendorController::class);
+// This registers:
+// GET    /vendors            -> index
+// GET    /vendors/create     -> create
+// POST   /vendors            -> store
+// GET    /vendors/{vendor}   -> show
+// GET    /vendors/{vendor}/edit -> edit
+// PUT    /vendors/{vendor}   -> update
+// DELETE /vendors/{vendor}   -> destroy
+
 Route::get(
     '/',
     [
@@ -23,13 +33,14 @@ Route::get(
         'index'
     ]
 );
-Route::get(
-    '/vendors/create',
-    [
-        VendorController::class,
-        'create'
-    ]
-);
+
+// Route::get(
+//     '/vendors/create',
+//     [
+//         VendorController::class,
+//         'create'
+//     ]
+// );
 Route::get(
     '/partials',
     function () {
@@ -42,3 +53,4 @@ Route::get(
         return (view('layouts/app'));
     }
 );
+
