@@ -16,6 +16,13 @@ use App\Http\Controllers\VendorController;
 |
 */
 
+Route::get(
+    '/',
+    function () {
+        return (view('vendors._form'));
+    }
+);
+
 Route::resource('vendors', VendorController::class);
 // This registers:
 // GET    /vendors            -> index
@@ -26,6 +33,7 @@ Route::resource('vendors', VendorController::class);
 // PUT    /vendors/{vendor}   -> update
 // DELETE /vendors/{vendor}   -> destroy
 
+Route::get('/health', fn() => response('OK', 200));
 Route::get(
     '/',
     [

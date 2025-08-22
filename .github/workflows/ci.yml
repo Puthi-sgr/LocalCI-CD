@@ -4,7 +4,7 @@ on:
   pull_request: ##Triggers the workflow when there is a pull request to the remote repo
   workflow_dispatch: ##Triggers the workflow manually
 jobs:
-  test:
+  test: #custom name
     runs-on: ubuntu-latest ##The OS on which the job will run
     steps:
       - uses: actions/checkout@v4 ##Checks out the code from the repo

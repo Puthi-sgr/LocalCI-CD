@@ -1,0 +1,89 @@
+name: Deploy to Production #The name of the workflow
+
+on: #Trigger
+  push:
+    branches: [ "main" ] #Triggers the workflow when there is a push to the main branch
+  workflow_dispatch: #Triggers the workflow manually
+
+jobs:
+  deploy-production: #custom job name
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4  #step 1
+      #Workflow runner runs the checkout action -> copy the codebase to the runner
+
+      - name: Create release tarball (Exclude development files) #step 2
+      ##Zips all of the files in the codebase but excludes development files
+        run: | #create the tarball name release.tgz then exclude the file in the .deploy-exclude but include everything excludes
+          echo 'vendor/' >> .deploy-exclude
+          echo 'node_modules/' >> .deploy-exclude
+          echo '.git/' >>.deploy-exclude
+          echo '.github/' >> .deploy-exclude
+          echo 'storage/' >> .deploy-exclude
+          echo '.env' >> .deploy-exclude
+          tar -czf release.tgz -X .deploy-exclude .
+      
+      - name: Upload the release to the server Vultr #step 3
+        uses: appleboy/scp-action@0.1.7 #Actions that securely transfer my tar file to the server
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER}}
+          port: ${{ secrets.SSH_PORT }}
+          key: ${{ secrets.SSH_KEY }}
+          source: 'release.tgz' #The tar file we packaged above
+          target: '/var/www/puthidelivery.eltheocapital.com/tmp/'
+
+      - name: Deploy on the server #step 4
+        uses: appleboy/ssh-action@v1.0.3
+        #Execute the command on the remote server via ssh
+        with: #With allow you to provide values
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          port: ${{ secrets.SSH_PORT }}
+          key: ${{ secrets.SSH_KEY }}
+          #script description
+            #stops the script if any command fails set -e
+            #Defining a bunch of variables that represent the app directory
+            #Making a bunch of directory
+            #Unzipping the release tarball to the release path
+          script: |
+            set -e 
+            APP_DIR=/var/www/puthidelivery.eltheocapital.com
+            RELEASES_DIR=$APP_DIR/releases
+            SHARED_DIR=$APP_DIR/shared
+            TMP_DIR=$APP_DIR/tmp
+            RELEASE_DATE=$(data + +%Y%m%d%H%M%S)
+            RELEASE_PATH=$RELEASES/$RELEASE_DATE
+
+            mkdir -p $RELEASES_DIR $SHARED $TMP_DIR
+            mkdir -p $SHARED_DIR/storage/app $SHARED_DIR/storage/framework/{cache,sessions,testing,views} $SHARED_DIR/storage/logs
+
+            #Unzip the tarball to the release path
+            mkdir -p $RELEASE_PATH
+            tar -xzf $TMP_DIR/release.tgz -C $RELEASE_PATH
+            
+            # shared config and storage
+            ln -sfn $SHARED_DIR/.env $RELEASE_PATH/.env
+            ##Creating a symlink file in the release dir to point to the real env in the shared dir
+
+            # deps & optimize
+            cd $RELEASE_PATH
+            composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
+            php artisan storage:link || true
+            php artisan migrate --force
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            
+            #permission ##www-data is actually the web server name on the server apache/nginx/etc
+            chown -R www-data:www-data $SHARED_DIR/storage
+            find $SHARED_DIR/storage -type d -exec chmod 775 {}\;
+            find $SHARED_DIR/storage -type f -exec chmod 664 {}\;
+
+            #atomic swtich
+            ln -sfn $RELEASE_PATH $APP_DIR/current
+
+            #reload apache
+            sudo systemctl reload apache2
+    
