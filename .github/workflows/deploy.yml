@@ -21,7 +21,8 @@ jobs:
           'vendor/' 'node_modules/' '.git/' '.github/' 'storage/' '.env' \
           'release.tgz' '.deploy-exclude' > "$EXCL"
 
-          tar -C "$GITHUB_WORKSPACE" -czf "$RUNNER_TEMP/release.tgz" -X "$EXCL" . mv "$RUNNER_TEMP/release.tgz" ./release.tgz
+          tar -C "$GITHUB_WORKSPACE" -czf "$RUNNER_TEMP/release.tgz" -X "$EXCL" .
+          mv "$RUNNER_TEMP/release.tgz" ./release.tgz
 
       
       - name: Upload the release to the server Vultr #step 3
