@@ -16,13 +16,13 @@ jobs:
       - name: Create release tarball (Exclude development files) #step 2
       ##Zips all of the files in the codebase but excludes development files
         run: | #create the tarball name release.tgz then exclude the file in the .deploy-exclude but include everything excludes
-          echo 'vendor/' >> .deploy-exclude
-          echo 'node_modules/' >> .deploy-exclude
-          echo '.git/' >>.deploy-exclude
-          echo '.github/' >> .deploy-exclude
-          echo 'storage/' >> .deploy-exclude
-          echo '.env' >> .deploy-exclude
-          tar -czf release.tgz -X .deploy-exclude .
+          EXCL="$RUNNER_TEMP/deploy-exclude"
+          printf '%s\n'  \
+          'vendor/' 'node_modules/' '.git/' '.github/' 'storage/' '.env' \
+          'release.tgz' '.deploy-exclude' > "$EXCL"
+
+          tar -C " $GITHUB_WORKSPACE" -czf "$RUNNER_TEMP/release.tgz" -X "$EXCL" . mv "$RUNNER_TEMP/release.tgz" ./release.tgz
+
       
       - name: Upload the release to the server Vultr #step 3
         uses: appleboy/scp-action@v0.1.7 #Actions that securely transfer my tar file to the server
