@@ -32,6 +32,7 @@ jobs:
           username: ${{ secrets.SSH_USER}}
           port: ${{ secrets.SSH_PORT }}
           key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
           source: 'release.tgz' #The tar file we packaged above
           target: '/var/www/puthidelivery.eltheocapital.com/tmp/'
 
@@ -87,5 +88,5 @@ jobs:
             ln -sfn $RELEASE_PATH $APP_DIR/current
 
             #reload apache
-            sudo systemctl reload apache2
+            sudo systemctl reload apache2 || true
     
