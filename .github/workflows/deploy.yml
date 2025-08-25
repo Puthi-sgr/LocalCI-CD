@@ -1,110 +1,105 @@
-name: Deploy to Production #The name of the workflow
+name: Deploy to Vultr
 
-on: #Trigger
+on:
   push:
-    branches: [ "main" ] #Triggers the workflow when there is a push to the main branch
-  workflow_dispatch: #Triggers the workflow manually
+    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
-  deploy-production: #custom job name
+  deploy:
     runs-on: ubuntu-latest
+    env:
+      APP_DIR: /var/www/puthidelivery.eltheocapital.com
 
     steps:
-      - uses: actions/checkout@v4  #step 1
-      #Workflow runner runs the checkout action -> copy the codebase to the runner
+      - uses: actions/checkout@v4
 
-      - name: Create release tarball (Exclude development files) #step 2
-      ##Zips all of the files in the codebase but excludes development files
-        run: | #create the tarball name release.tgz then exclude the file in the .deploy-exclude but include everything excludes
+      # Build tarball OUTSIDE the working dir so tar doesn't see new files while reading "."
+      - name: Create release tarball
+        run: |
           EXCL="$RUNNER_TEMP/deploy-exclude"
-          printf '%s\n'  \
-          'vendor/' 'node_modules/' '.git/' '.github/' 'storage/' '.env' \
-          'release.tgz' '.deploy-exclude' > "$EXCL"
-
+          printf '%s\n' \
+            'vendor/' 'node_modules/' '.git/' '.github/' 'storage/' '.env' \
+            'release.tgz' '.deploy-exclude' > "$EXCL"
           tar -C "$GITHUB_WORKSPACE" -czf "$RUNNER_TEMP/release.tgz" -X "$EXCL" .
           mv "$RUNNER_TEMP/release.tgz" ./release.tgz
+          ls -lh release.tgz
 
-      
-      - name: Upload the release to the server Vultr #step 3
-        uses: appleboy/scp-action@v0.1.7 #Actions that securely transfer my tar file to the server
+      - name: Upload tarball to server
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER}}
-          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USER }}
+          port: ${{ secrets.SSH_PORT || 22 }}
           key: ${{ secrets.SSH_KEY }}
-          source: 'release.tgz' #The tar file we packaged above
-          target: '/var/www/puthidelivery.eltheocapital.com/tmp/'
+          source: "release.tgz"
+          target: "${{ env.APP_DIR }}/tmp/"
 
-      - name: Deploy on the server #step 4
+      - name: Deploy on server
         uses: appleboy/ssh-action@v1.0.3
-        #Execute the command on the remote server via ssh
-        with: #With allow you to provide values
+        with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          port: ${{ secrets.SSH_PORT }}
+          port: ${{ secrets.SSH_PORT || 22 }}
           key: ${{ secrets.SSH_KEY }}
-          #script description
-            #stops the script if any command fails set -e
-            #Defining a bunch of variables that represent the app directory
-            #Making a bunch of directory
-            #Unzipping the release tarball to the release path
           script: |
-            set -e 
-            APP_DIR=/var/www/puthidelivery.eltheocapital.com
-            RELEASES_DIR=$APP_DIR/releases
-            SHARED_DIR=$APP_DIR/shared
-            TMP_DIR=$APP_DIR/tmp
-            RELEASE_DATE=$(date +%Y%m%d%H%M%S)
-            RELEASE_PATH=$RELEASES_DIR/$RELEASE_DATE
+            set -Eeuo pipefail
+            umask 002
+            set -x
 
-            # Guard against empty vars (fail fast if unset)
+            APP_DIR="${APP_DIR:-/var/www/puthidelivery.eltheocapital.com}"
+            RELEASES_DIR="$APP_DIR/releases"
+            SHARED_DIR="$APP_DIR/shared"
+            TMP_DIR="$APP_DIR/tmp"
+            RELEASE="$(date +%Y%m%d%H%M%S)"
+            RELEASE_PATH="$RELEASES_DIR/$RELEASE"
+
+            # Fail fast if vars empty
             : "${APP_DIR:?}"; : "${RELEASES_DIR:?}"; : "${SHARED_DIR:?}"; : "${RELEASE_PATH:?}"
 
-            # Ensure layout exists
+            # Ensure layout
             mkdir -p "$RELEASES_DIR" "$SHARED_DIR" "$TMP_DIR"
             mkdir -p "$SHARED_DIR/storage/app" \
-                    "$SHARED_DIR/storage/framework/cache" \
-                    "$SHARED_DIR/storage/framework/views" \
-                    "$SHARED_DIR/storage/framework/sessions" \
-                    "$SHARED_DIR/storage/framework/testing" \
-                    "$SHARED_DIR/storage/logs"
+                     "$SHARED_DIR/storage/framework/cache" \
+                     "$SHARED_DIR/storage/framework/views" \
+                     "$SHARED_DIR/storage/framework/sessions" \
+                     "$SHARED_DIR/storage/framework/testing" \
+                     "$SHARED_DIR/storage/logs"
 
-            #Unzip the tarball to the release path
-            mkdir -p $RELEASE_PATH
-            tar -xzf $TMP_DIR/release.tgz -C $RELEASE_PATH
-            
-            # shared config and storage
+            # Prepare release
+            mkdir -p "$RELEASE_PATH"
+            tar -xzf "$TMP_DIR/release.tgz" -C "$RELEASE_PATH"
+
+            # Link shared files/dirs
             ln -sfn "$SHARED_DIR/.env" "$RELEASE_PATH/.env"
             rm -rf "$RELEASE_PATH/storage"
             ln -sfn "$SHARED_DIR/storage" "$RELEASE_PATH/storage"
-
-            ##Creating a symlink file in the release dir to point to the real env in the shared dir
-
-            # Make sure cache dir exists in the release
             mkdir -p "$RELEASE_PATH/bootstrap/cache"
 
-            # Permissions (no chown; assume one-time chown done during server prep)
+            # Permissions (no chown; do a one-time chown manually on server)
             find "$SHARED_DIR/storage" -type d -exec chmod 2775 {} +
             find "$SHARED_DIR/storage" -type f -exec chmod 0664 {} +
             chmod -R 2775 "$RELEASE_PATH/bootstrap/cache" || true
-            
-            # deps & optimize
-            cd $RELEASE_PATH
-            composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
+
+            # PHP deps & optimize
+            cd "$RELEASE_PATH"
+            COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
             php artisan storage:link || true
+
+            # DB smoke test before migrate (clearer error if misconfigured)
+            php -r "require 'vendor/autoload.php';
+              \$app=require 'bootstrap/app.php';
+              \$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+              try { \Illuminate\Support\Facades\DB::connection()->getPdo(); echo \"DB OK\n\"; }
+              catch (\Throwable \$e) { fwrite(STDERR, \"DB FAIL: \".$e->getMessage().\"\\n\"); exit(1); }"
+
             php artisan migrate --force
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
-            
-            #permission ##www-data is actually the web server name on the server apache/nginx/etc
-            chown -R www-data:www-data $SHARED_DIR/storage
-            find $SHARED_DIR/storage -type d -exec chmod 775 {}\;
-            find $SHARED_DIR/storage -type f -exec chmod 664 {}\;
 
-            #atomic swtich
-            ln -sfn $RELEASE_PATH $APP_DIR/current
+            # Atomic switch
+            ln -sfn "$RELEASE_PATH" "$APP_DIR/current"
 
-            #reload apache
-            sudo systemctl reload apache2 || true
-    
+            # Optional: reload apache if allowed in sudoers
+            sudo -n systemctl reload apache2 || true
