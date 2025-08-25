@@ -55,7 +55,7 @@ jobs:
             SHARED_DIR=$APP_DIR/shared
             TMP_DIR=$APP_DIR/tmp
             RELEASE_DATE=$(data + +%Y%m%d%H%M%S)
-            RELEASE_PATH=$RELEASES/$RELEASE_DATE
+            RELEASE_PATH=$RELEASES_DIR/$RELEASE_DATE
 
             mkdir -p $RELEASES_DIR $SHARED $TMP_DIR
             mkdir -p $SHARED_DIR/storage/app $SHARED_DIR/storage/framework/{cache,sessions,testing,views} $SHARED_DIR/storage/logs
