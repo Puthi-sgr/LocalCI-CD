@@ -32,7 +32,6 @@ jobs:
           username: ${{ secrets.SSH_USER}}
           port: ${{ secrets.SSH_PORT }}
           key: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.SSH_PASSPHRASE }}
           source: 'release.tgz' #The tar file we packaged above
           target: '/var/www/puthidelivery.eltheocapital.com/tmp/'
 
@@ -44,7 +43,6 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           port: ${{ secrets.SSH_PORT }}
           key: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.SSH_PASSPHRASE }}
           #script description
             #stops the script if any command fails set -e
             #Defining a bunch of variables that represent the app directory
