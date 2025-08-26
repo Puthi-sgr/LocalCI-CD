@@ -2,9 +2,9 @@ name: Deploy to Vultr
 
 on:
   workflow_run:
-    workflows: ["CI","Laravel"]
-    types: [completed]
-    branches: [main]
+    workflows: [ "Laravel" ]
+    types: [ completed ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -78,10 +78,7 @@ jobs:
             ln -sfn "$SHARED_DIR/storage" "$RELEASE_PATH/storage"
             mkdir -p "$RELEASE_PATH/bootstrap/cache"
 
-            # Permissions (no chown; do a one-time chown manually on server)
-            find "$SHARED_DIR/storage" -type d -exec chmod 2775 {} +
-            find "$SHARED_DIR/storage" -type f -exec chmod 0664 {} +
-            chmod -R 2775 "$RELEASE_PATH/bootstrap/cache" || true
+            
 
             # PHP deps & optimize
             cd "$RELEASE_PATH"
