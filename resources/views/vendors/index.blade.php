@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-   <h1 style="text-align: center">Vendors</h1>
+   <h1 style="text-align: center">Vendors application version 2</h1>
 
    @if(session('status'))
       <div style="color:green; text-align: center">
