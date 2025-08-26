@@ -1,6 +1,8 @@
 name: CI ##The name of the workflow
 on:
-  push: ##Triggers the workflow when there is a push to the remote repo
+  workflow_run:
+    workflows: [" Laravel "]
+    types: [ completed ]
   pull_request: ##Triggers the workflow when there is a pull request to the remote repo
   workflow_dispatch: ##Triggers the workflow manually
 jobs:
