@@ -1,0 +1,23 @@
+name: Auto merge on PR labeled automerge
+on:
+    workflow_run:
+        workflows: [ "Feature CI" ]
+        types: [ completed ]
+    
+    workflow_dispatch:
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+    enabled_automerge:
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - run: |
+               PR=$(gh pr list --head "${{ github.event.workflow_run.head_branch }}" --json "number" -q ".[0].number")
+                gh pr merge "$PR" --squash --auto
+              env:
+                token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,42 @@
+name: Open Pull request ##The name of the workflow
+on:
+  workflow_run:
+    workflows: [ "Feature CI" ]
+    types:
+      - completed
+jobs:
+    opens-pr-on-green:
+        runs-on: ubuntu-latest
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        steps:
+          - uses: actions/checkout@v4
+
+          - name: Ensure GH CLI
+            uses: cli/cli-action@v2
+
+          - name: Create or update PR to main 
+            env: 
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+            run: |
+              BASE="main"
+              HEAD="${{ github.event.workflow_run.head_branch }}" # Feature branch name
+              # If PR exists, do nothing; else create one
+              gh pr view "$HEAD" --repo "$GITHUB_REPOSITORY" || \
+              gh pr create \
+                --base "$BASE" \
+                --head "$HEAD" \
+                --title "feat: ${HEAD}" \
+                --body "Auto PR created after the feature branch finished."
+              PR_NUMBER=$(gh pr view "$HEAD" --repo "$GITHUB_REPOSITORY" --json number -q .number) #Gives context for the Merge
+              if [ -z "$PR_NUMBER" ]; then echo "PR not found!"; exit 1; fi
+
+          - name: Add automerge label
+            uses: actions/github-script@v6
+            with: ##Create a label "automerge" in the pull request
+              script: |
+                github.rest.issues.addLabels({
+                  issue_number: context.payload.pull_request.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  labels: ['automerge']
+                })

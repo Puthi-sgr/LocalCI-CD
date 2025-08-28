@@ -19,7 +19,7 @@ use App\Http\Controllers\VendorController;
 Route::get(
     '/',
     function () {
-        return (view('vendors._form'));
+        return (view('home.homepage'));
     }
 );
 
@@ -34,13 +34,6 @@ Route::resource('vendors', VendorController::class);
 // DELETE /vendors/{vendor}   -> destroy
 
 Route::get('/health', fn() => response('OK', 200));
-Route::get(
-    '/',
-    [
-        HelloController::class,
-        'index'
-    ]
-);
 
 // Route::get(
 //     '/vendors/create',

@@ -2,7 +2,7 @@ name: Deploy to Vultr
 
 on:
   workflow_run:
-    workflows: [ "CI" ]
+    workflows: [ "not yet should be after merge"]
     types: [ completed ]
     branches: [ main ]
   workflow_dispatch:

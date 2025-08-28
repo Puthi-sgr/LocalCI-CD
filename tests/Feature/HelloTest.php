@@ -16,10 +16,7 @@ class HelloTest extends TestCase
         $response = $this->get('/');
 
         $response->assertOk()
-                    ->assertHeader('Content-Type', 'text/plain; charset=UTF-8')
-                    ->assertJson([ 
-                        'message' => 'hello'
-                    ])
-                    ->assertStatus(200);
+            ->assertStatus(200);
+
     }
 }
