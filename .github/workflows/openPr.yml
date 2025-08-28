@@ -19,7 +19,7 @@ jobs:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
             run: |
               BASE="main"
-              HEAD="${GITHUB_REF_NAME}" # Feature branch name
+              HEAD="${{ github.event.workflow_run.head_branch }}" # Feature branch name
               # If PR exists, do nothing; else create one
               gh pr view "$HEAD" --repo "$GITHUB_REPOSITORY" || \
               gh pr create \
@@ -27,6 +27,8 @@ jobs:
                 --head "$HEAD" \
                 --title "feat: ${HEAD}" \
                 --body "Auto PR created after the feature branch finished."
+              PR_NUMBER=$(gh pr view "$HEAD" --repo "$GITHUB_REPOSITORY" --json number -q .number)
+              if [ -z "$PR_NUMBER" ]; then echo "PR not found!"; exit 1; fi
 
           - name: Add automerge label
             uses: actions/github-script@v6
