@@ -34,6 +34,5 @@ jobs:
             gh pr create \
             --base "$BASE" \
             --head "$HEAD" --title "feat: $HEAD" \
-            --body "Auto PR after green Feature CI."
-
-            gh pr edit "$HEAD" --repo "$GITHUB_REPOSITORY" --add-label automerge
+            --body "Auto PR after green Feature CI." \
+            --add-label "automerge"
