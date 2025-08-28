@@ -25,4 +25,4 @@ jobs:
                 --head "$HEAD" \
                 --title "feat: ${HEAD}" \
                 --body "Auto PR created after the feature branch finished."
-                --label "automerge"
+              

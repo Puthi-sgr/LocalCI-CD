@@ -17,3 +17,13 @@ jobs:
           with: { php-version: '8.2' }
         - run: composer install --no-interaction --prefer-dist --no-progress
         - run: php artisan test --testsuite=Unit #Target the test/unit dir
+        - name: Add automerge label
+          uses: actions/github-script@v6
+          with: ##Create a label "automerge" in the pull request
+            script: |
+              github.rest.issues.addLabels({
+                issue_number: context.payload.pull_request.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: ['automerge']
+              })
