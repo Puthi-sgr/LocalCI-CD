@@ -23,7 +23,8 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
-            - uses: peter-evans/enable-pull-request-automerge@v3
-              with:
+            - run: |
+                PR=$(gh pr list --head ${{ github.event.workflow_run.head_branch }} --json number -q '.[0].number')
+                gh pr merge $PR --squash --auto
+              env:
                 token: ${{ secrets.GITHUB_TOKEN }}
-                merge-method: squash
