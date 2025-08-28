@@ -3,8 +3,8 @@ on:
   workflow_run:
     workflows: [ "Laravel" ]
     types: [ completed ]
-  pull_request: 
-    branches: [ 'main' ]
+  # pull_request: 
+  #   branches: [ 'main' ]
     ##Triggers the workflow when there is a pull request to the remote repo
   workflow_dispatch: ##Triggers the workflow manually
 jobs:
