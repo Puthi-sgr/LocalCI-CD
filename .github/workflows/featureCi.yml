@@ -17,4 +17,21 @@ jobs:
           with: { php-version: '8.2' }
         - run: composer install --no-interaction --prefer-dist --no-progress
         - run: php artisan test --testsuite=Unit #Target the test/unit dir
-      
+    open_pr_on_green:
+        needs: [test]
+        runs-on: ubuntu-latest
+        steps:
+        - uses: actions/checkout@v4
+        - name: Ensure GH CLI
+          uses: cli/cli-action@v2
+        - name: Create/label PR to main
+          env: 
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            set -Eeuo pipefail
+            BASE=main
+            HEAD="${{ github.ref_name }}"
+            gh pr view "$HEAD" --repo "$GITHUB_REPOSITORY" || \
+                gh pr create --base "$BASE" --head "$HEAD" --title "feat: $HEAD" --body "Auto PR after green Feature CI."
+                
+            gh pr edit "$HEAD" --repo "$GITHUB_REPOSITORY" --add-label automerge
