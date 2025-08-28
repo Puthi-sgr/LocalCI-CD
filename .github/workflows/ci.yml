@@ -1,8 +1,10 @@
 name: CI ##The name of the workflow
 on:
-  workflow_run:
-    workflows: [ "Laravel" ]
-    types: [ completed ]
+  workflow_call:
+    inputs:
+      php-version:
+        type: string
+        default: '8.2'
   # pull_request: 
   #   branches: [ 'main' ]
     ##Triggers the workflow when there is a pull request to the remote repo
@@ -16,7 +18,7 @@ jobs:
       - name: Setup PHP ##Sets up the PHP environment
         uses: shivammathur/setup-php@v2 ##Uses the set up php action
         with:
-          php-version: "8.2"
+          php-version: ${{inputs.php-version}}
           extension: mbstring, intl, pcntl, pdo_sqlite, sqlite3
           coverage: none ##No coverage is needed for this workflow
 

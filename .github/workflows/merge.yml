@@ -1,7 +1,7 @@
 name: Auto merge on PR labeled automerge
 on:
     workflow_run:
-        workflows: [ "CI" ]
+        workflows: [ "Feature CI" ] ##Dependency
         types:
             - completed
     pull_request:
@@ -19,9 +19,7 @@ permissions:
 jobs:
     enabled_automerge:
         if: >
-            github.event.workflow_run.conclusion == 'success' &&
-            github.event.pull_request.base.ref == 'main' &&
-            contains(github.event.pull_request.labels.*.name, 'automerge')
+            ${{contains(github.event.pull_request.labels.*.name, 'automerge') || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')}}
 
         runs-on: ubuntu-latest
         steps:

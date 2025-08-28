@@ -35,8 +35,12 @@ jobs:
             --base "$BASE" \
             --head "$HEAD" --title "feat: $HEAD" \
             --body "Auto PR after green Feature CI." \
-            --add-label "automerge"
-    laravel-tests:
+            --add-label "automerge" #CRITICAL POINT
+    laravel-tests: ##Reusable Workflow
         needs: [test, open_pr_on_green]
         uses: ./.github/workflows/laravel.yml
+        with: { php-version: '8.2' }
+    CI-full:  ##Reusable Workflow
+        needs: [test, open_pr_on_green, laravel-tests]
+        uses: ./.github/workflows/ci.yml
         with: { php-version: '8.2' }
