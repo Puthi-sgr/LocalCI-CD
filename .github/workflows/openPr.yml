@@ -27,7 +27,7 @@ jobs:
                 --head "$HEAD" \
                 --title "feat: ${HEAD}" \
                 --body "Auto PR created after the feature branch finished."
-              PR_NUMBER=$(gh pr view "$HEAD" --repo "$GITHUB_REPOSITORY" --json number -q .number)
+              PR_NUMBER=$(gh pr view "$HEAD" --repo "$GITHUB_REPOSITORY" --json number -q .number) #Gives context for the Merge
               if [ -z "$PR_NUMBER" ]; then echo "PR not found!"; exit 1; fi
 
           - name: Add automerge label
