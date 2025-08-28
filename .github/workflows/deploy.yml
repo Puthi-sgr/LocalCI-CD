@@ -1,11 +1,11 @@
 name: Deploy to Vultr
 
 on:
-  workflow_run:
-    workflows: [ "not yet should be after merge"]
-    types: [ completed ]
+  push:
     branches: [ main ]
+  
   workflow_dispatch:
+ 
 
 jobs:
   deploy:
