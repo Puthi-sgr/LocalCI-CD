@@ -1,7 +1,7 @@
 name: Open Pull request ##The name of the workflow
 on:
   workflow_run:
-    workflows: ["Feature CI"]
+    workflows: [ "Feature CI" ]
     types:
       - completed
 jobs:
@@ -27,7 +27,7 @@ jobs:
                 --head "$HEAD" \
                 --title "feat: ${HEAD}" \
                 --body "Auto PR created after the feature branch finished."
-                
+
           - name: Add automerge label
             uses: actions/github-script@v6
             with: ##Create a label "automerge" in the pull request
