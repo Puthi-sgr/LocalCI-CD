@@ -35,7 +35,7 @@ jobs:
             --base "$BASE" \
             --head "$HEAD" --title "feat: $HEAD" \
             --body "Auto PR after green Feature CI." \
-            --add-label "automerge" #CRITICAL POINT
+            --label "automerge" #CRITICAL POINT
     CI-full:  ##Reusable Workflow
         needs: [test, open_pr_on_green]
         uses: ./.github/workflows/ci.yml
