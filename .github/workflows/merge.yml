@@ -19,5 +19,6 @@ jobs:
             - run: |
                 PR=$(gh pr list --head "${{ github.event.workflow_run.head_branch }}" --json "number" -q ".[0].number")
                 gh pr merge "$PR" --squash --auto
+                echo "GH_TOKEN set: ${GH_TOKEN:+yes}"
               env:
-                GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                GH_TOKEN: ${{ github.token }}
