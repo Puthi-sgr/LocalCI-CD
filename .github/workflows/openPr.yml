@@ -1,7 +1,7 @@
 name: Open Pull request ##The name of the workflow
 on:
   workflow_run:
-    workflows: [ "Feature CI" ]
+    workflows: [ "Feature CIII" ]
     types:
       - completed
 jobs:
