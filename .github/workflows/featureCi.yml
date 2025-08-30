@@ -17,6 +17,7 @@ jobs:
           with: { php-version: '8.2' }
         - run: composer install --no-interaction --prefer-dist --no-progress
         - run: php artisan test --testsuite=Unit #Target the test/unit dir
+
     open_pr_on_green:
         needs: [test]
         runs-on: ubuntu-latest
@@ -30,14 +31,31 @@ jobs:
             set -Eeuo pipefail
             BASE=main
             HEAD="${{ github.ref_name }}"
-            echo "Base: $BASE, Head: $HEAD"
+            
             gh label create "automerge" --color "0E8A16" --description "Enable auto-merge" || true
-            gh pr view "$HEAD" --repo "$GITHUB_REPOSITORY" || \
-            gh pr create \
-            --base "$BASE" \
-            --head "$HEAD" --title "feat: $HEAD" \
-            --body "Auto PR after green Feature CI." \
-            --label "automerge" #CRITICAL POINT
+
+            # Find existing PR (open/closed) for this branch
+            PR_JSON=$(gh pr list --head "$HEAD" --state all --json number,state -q '.[0]')
+
+            if [ -z "$PR_JSON" ]; then
+              # No PR -> create one with the label
+              gh pr create \
+                --base "$BASE" --head "$HEAD" \
+                --title "feat: $HEAD" \
+                --body "Auto PR after green Feature CI." \
+                --label "automerge"
+              PR=$(gh pr list --head "$HEAD" --json number -q '.[0].number')
+            else
+              # PR exists -> ensure label (and reopen if it was closed)
+              PR=$(echo "$PR_JSON" | jq -r .number)
+              STATE=$(echo "$PR_JSON" | jq -r .state)
+              if [ "$STATE" = "CLOSED" ]; then gh pr reopen "$PR"; fi
+              gh pr edit "$PR" --add-label "automerge" || true
+              # Optionally sync title/body:
+              # gh pr edit "$PR" --title "feat: $HEAD" --body "Auto PR after green Feature CI."
+            fi
+
+            echo "pr=$PR" >> "$GITHUB_OUTPUT"
     CI-full:  ##Reusable Workflow
         needs: [test, open_pr_on_green]
         uses: ./.github/workflows/ci.yml
