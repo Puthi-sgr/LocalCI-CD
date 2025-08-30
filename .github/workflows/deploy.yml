@@ -3,13 +3,19 @@ name: Deploy to Vultr
 on:
   push:
     branches: [ main ]
-  
+
+  workflow_run:
+    workflows: [ "Feature CI" ]
+    types: [completed]
+    branches: [main]
+
   workflow_dispatch:
  
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     env:
       APP_DIR: /var/www/puthidelivery.eltheocapital.com
 
