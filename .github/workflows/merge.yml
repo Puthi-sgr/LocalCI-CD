@@ -17,7 +17,7 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - run: |
-               PR=$(gh pr list --head "${{ github.event.workflow_run.head_branch }}" --json "number" -q ".[0].number")
+                PR=$(gh pr list --head "${{ github.event.workflow_run.head_branch }}" --json "number" -q ".[0].number")
                 gh pr merge "$PR" --squash --auto
               env:
-                token: ${{ secrets.GITHUB_TOKEN }}
+                GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
