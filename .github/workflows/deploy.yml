@@ -6,7 +6,8 @@ on:
 
   workflow_run:
     workflows: [ "Feature CI" ]
-    types: 
+    branches: [ main ]
+    types:
       - completed
 
   workflow_dispatch:
@@ -15,7 +16,7 @@ on:
 jobs:
   deploy-this-to-the-server:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' }}
     env:
       APP_DIR: /var/www/puthidelivery.eltheocapital.com
 
