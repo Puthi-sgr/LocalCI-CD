@@ -30,6 +30,7 @@ jobs:
             set -Eeuo pipefail
             BASE=main
             HEAD="${{ github.ref_name }}"
+            echo "Base: $BASE, Head: $HEAD"
             gh pr view "$HEAD" --repo "$GITHUB_REPOSITORY" || \
             gh pr create \
             --base "$BASE" \
