@@ -32,7 +32,7 @@ jobs:
             BASE=main
             HEAD="${{ github.ref_name }}"
             
-            gh label create "automerge" --color "0E8A16" --description "Enable auto-merge" || true
+            gh label create "automerge" --force --color "0E8A16" --description "Enable auto-merge" || true
 
             # Find existing PR (open/closed) for this branch
             PR_JSON=$(gh pr list --head "$HEAD" --state all --json number,state -q '.[0]')
