@@ -30,6 +30,8 @@ jobs:
             set -Eeuo pipefail
             BASE=main
             HEAD="${{ github.ref_name }}"
+            echo "Base: $BASE, Head: $HEAD"
+            gh label create "automerge" --color "0E8A16" --description "Enable auto-merge" || true
             gh pr view "$HEAD" --repo "$GITHUB_REPOSITORY" || \
             gh pr create \
             --base "$BASE" \
