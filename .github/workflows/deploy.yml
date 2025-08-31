@@ -5,8 +5,7 @@ on:
     branches: [ main ]
 
   workflow_run:
-    workflows: [ "Feature CI" ]
-    branches: [ main ]
+    workflows: [ "Auto merge on PR labeled automerge" ]
     types:
       - completed
 
@@ -24,7 +23,7 @@ jobs:
       APP_DIR: /var/www/puthidelivery.eltheocapital.com
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4 #Checks out to the main branch
 
       # Build tarball OUTSIDE the working dir so tar doesn't see new files while reading "."
       - name: Create release tarball
